@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scrabble Game</title>
+  <style>
+    /* Basic styling for the game board */
+    .game-container {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      grid-template-rows: repeat(15, 30px);
+      border: 1px solid black;
+      width: 450px;
+      height: 450px;
+    }
+
+    .square {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 14px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .square.start {
+      background-color: #f0f0f0;
+    }
+
+    .square.double-word {
+      background-color: #ffb3b3;
+    }
+
+    .square.triple-word {
+      background-color: #ff8080;
+    }
+
+    .square.double-letter {
+      background-color: #b3ffb3;
+    }
+
+    .square.triple-letter {
+      background-color: #80ff80;
+    }
+
+    .square.blank {
+      background-color: #ccc;
+    }
+
+    /* Styling for player info, rack, and word input */
+    .player-info,
+    .word-input {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .player-rack {
+      display: flex;
+      justify-content: space-around;
+      width: 200px;
+    }
+
+    .tile {
+      width: 25px;
+      height: 25px;
+      border: 1px solid black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      cursor: pointer;
+      background-color: #e0e0e0;
+      position: relative;
+    }
+
+    .tile.selected {
+      background-color: #ffcc00;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game-container">
+    <div class="board"></div>
+    <div class="player-info">
+      <div class="player-turn">Player 1's Turn</div>
+      <div class="player-score">Score: 0</div>
+      <div class="player-rack"></div>
+    </div>
+    <div class="word-input">
+      <input type="text" id="word-input" placeholder="Enter your word" readonly>
+      <button id="submit-word">Submit</button>
+    </div>
+  </div>
+
+  <script>
+    // Scrabble Tile Data
+    const tileData = {
+      "A": 1,
+      "B": 3,
+      "C": 3,
+      "D": 2,
+      "E": 1,
+      "F": 4,
+      "G": 2,
+      "H": 4,
+      "I": 1,
+      "J": 8,
+      "K": 5,
+      "L": 1,
+      "M": 3,
+      "N": 1,
+      "O": 1,
+      "P": 3,
+      "Q": 10,
+      "R": 1,
+      "S": 1,
+      "T": 1,
+      "U": 1,
+      "V": 4,
+      "W": 4,
+      "X": 8,
+      "Y": 4,
+      "Z": 10,
+      "_": 0 // Blank tile
+    };
+
+    // Scrabble Board Setup (15x15)
+    const boardSize = 15;
+    const boardArray = [
+      ["blank", "triple-word", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "triple-word", "blank"],
+      ["double-letter", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "double-letter"],
+      ["blank", "blank", "double-word", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "double-word", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "double-letter", "blank", "blank", "blank", "blank", "blank", "blank", "double-letter", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "blank", "double-word", "blank", "blank", "blank", "blank", "double-word", "blank", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "blank", "blank", "triple-letter", "blank", "blank", "blank", "triple-letter", "blank", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "blank", "blank", "blank", "double-word", "blank", "double-word", "blank", "blank", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "blank", "blank", "blank", "blank", "double-letter", "blank", "blank", "blank", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "blank", "blank", "blank", "double-word", "blank", "double-word", "blank", "blank", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "blank", "blank", "triple-letter", "blank", "blank", "blank", "triple-letter", "blank", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "blank", "double-word", "blank", "blank", "blank", "blank", "double-word", "blank", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "blank", "double-letter", "blank", "blank", "blank", "blank", "blank", "blank", "double-letter", "blank", "blank", "blank", "blank"],
+      ["blank", "blank", "double-word", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "double-word", "blank", "blank", "blank", "blank"],
+      ["double-letter", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "double-letter"],
+      ["blank", "triple-word", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "blank", "triple-word", "blank"]
+    ];
+
+    // Game Initialization
+    const board = document.querySelector('.board');
+    const squares = [];
+    const playerTurn = document.querySelector('.player-turn');
+    const playerScore = document.querySelector('.player-score');
+    const playerRack = document.querySelector('.player-rack');
+    const wordInput = document.getElementById('word-input');
+    const submitWordButton = document.getElementById('submit-word');
+    let currentPlayer = 1; // Start with Player 1
+    let playerScores = { 1: 0, 2: 0 };
+    let rack = []; // Player's rack
+    let placedTiles = []; // Tiles placed on the board
+    let selectedTile = null; // Track the selected tile
+
+    // Create Scrabble Board
+    function createBoard() {
+      for (let row = 0; row < boardSize; row++) {
+        for (let col = 0; col < boardSize; col++) {
+          const square = document.createElement('div');
+          square.classList.add('square');
+          square.classList.add(boardArray[row][col]);
+          square.dataset.row = row;
+          square.dataset.col = col;
+          square.addEventListener('click', handleSquareClick);
+          board.appendChild(square);
+          squares.push(square);
+        }
+      }
+    }
+
+    // Function to randomly draw tiles from tileData
+    function drawTiles() {
+      rack = [];
+      for (let i = 0; i < 7; i++) {
+        let randomLetter = Object.keys(tileData)[Math.floor(Math.random() * Object.keys(tileData).length)];
+        rack.push(randomLetter);
+      }
+      updateRackDisplay();
+    }
+
+    // Function to update the display of player's rack
+    function updateRackDisplay() {
+      playerRack.innerHTML = ''; // Clear the rack
+      rack.forEach((letter, index) => {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.textContent = letter;
+        tile.dataset.index = index;
+        tile.addEventListener('click', handleTileClick);
+        playerRack.appendChild(tile);
+      });
+    }
+
+    // Function to place a tile on the board
+        function placeTile(row, col, letter) {
+      const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+      if (square && !square.classList.contains('occupied')) {
+        square.textContent = letter;
+        square.classList.add('occupied');
+        placedTiles.push({ row, col, letter });
+        updateBoardDisplay();
+      }
+    }
+
+    // Handle click on a board square
+    function handleSquareClick(event) {
+      const square = event.currentTarget;
+      const row = square.dataset.row;
+      const col = square.dataset.col;
+
+      if (selectedTile) {
+        placeTile(row, col, selectedTile.textContent);
+        selectedTile.classList.remove('selected');
+        selectedTile = null;
+        updateRackDisplay();
+      }
+    }
+
+    // Handle click on a tile from the rack
+    function handleTileClick(event) {
+      const tile = event.currentTarget;
+      if (selectedTile) {
+        selectedTile.classList.remove('selected');
+      }
+      selectedTile = tile;
+      tile.classList.add('selected');
+    }
+
+    // Handle the submit word button click
+    function handleSubmitWord() {
+      // Collect letters from the board to form the word
+      const word = [];
+      placedTiles.forEach(({ row, col, letter }) => {
+        word.push(letter);
+      });
+
+      const wordStr = word.join('');
+      if (wordStr.length > 0) {
+        // For simplicity, just log the word and update the score
+        console.log(`Word Submitted: ${wordStr}`);
+        const score = calculateScore(wordStr);
+        playerScores[currentPlayer] += score;
+        playerScore.textContent = `Score: ${playerScores[currentPlayer]}`;
+        switchPlayer();
+        drawTiles(); // Draw new tiles after submitting a word
+        resetBoard();
+      }
+    }
+
+    // Switch player turns
+    function switchPlayer() {
+      currentPlayer = currentPlayer === 1 ? 2 : 1;
+      playerTurn.textContent = `Player ${currentPlayer}'s Turn`;
+    }
+
+    // Calculate the score for a word
+    function calculateScore(word) {
+      let score = 0;
+      word.split('').forEach(letter => {
+        score += tileData[letter.toUpperCase()] || 0;
+      });
+      return score;
+    }
+
+    // Update board display with placed tiles
+    function updateBoardDisplay() {
+      placedTiles.forEach(({ row, col, letter }) => {
+        const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+        if (square) {
+          square.textContent = letter;
+        }
+      });
+    }
+
+    // Reset the board to allow new placements
+    function resetBoard() {
+      placedTiles.forEach(({ row, col }) => {
+        const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+        if (square) {
+          square.textContent = '';
+          square.classList.remove('occupied');
+        }
+      });
+      placedTiles = [];
+      updateBoardDisplay();
+    }
+
+    // Initialize the game
+    function initGame() {
+      createBoard();
+      drawTiles();
+      submitWordButton.addEventListener('click', handleSubmitWord);
+    }
+
+    initGame();
+  </script>
+</body>
+</html>
+
