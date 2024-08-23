@@ -95,6 +95,11 @@
 
     #submitWord {
       margin-top: 20px;
+      margin-right: 10px;
+    }
+
+    #skipTurn {
+      margin-top: 20px;
     }
 
     #playerScore, #playerTurn {
@@ -107,6 +112,7 @@
   <div id="board"></div>
   <div id="rack"></div>
   <button id="submitWord">Submit Word</button>
+  <button id="skipTurn">Skip Turn</button>
   <div id="playerScore">Score: 0</div>
   <div id="playerTurn">Player 1's Turn</div>
 
@@ -114,6 +120,7 @@
     const board = document.getElementById('board');
     const rack = document.getElementById('rack');
     const submitWordButton = document.getElementById('submitWord');
+    const skipTurnButton = document.getElementById('skipTurn');
     const playerScore = document.getElementById('playerScore');
     const playerTurn = document.getElementById('playerTurn');
     
@@ -422,6 +429,11 @@
       createBoard();
       drawTiles();
       submitWordButton.addEventListener('click', handleSubmitWord);
+      skipTurnButton.addEventListener('click', skipTurn);
+    }
+
+    function skipTurn() {
+      switchPlayer();
     }
 
     // Start by fetching the dictionary
