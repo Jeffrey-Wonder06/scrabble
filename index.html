@@ -121,7 +121,7 @@
     let placedTiles = [];
     let currentPlayer = 1;
     let playerScores = {1: 0, 2: 0};
-    let dictionary = ["CAT", "DOG", "HOUSE", "TREE", "BIRD", "SUN", "MOON", "STAR"]; // Replace with your dictionary
+    let dictionary = [scrabble-dictionary]; // Replace with your dictionary
 
     // Define the tile values and special tiles
     const tileData = {
@@ -226,6 +226,19 @@
                   .classList.contains('occupied');
       });
     }
+    async function isValidWord(word) {
+  try {
+    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+    if (!response.ok) {
+      return false; // Word not found
+    }
+    const data = await response.json();
+    return data.length > 0; // Check if the response has entries (word is valid)
+  } catch (error) {
+    console.error("Error fetching dictionary data:", error);
+    return false;
+  }
+}
 
     function handleSquareClick(event) {
       const square = event.currentTarget;
@@ -364,36 +377,36 @@
     }
 
     function isValidWordWithPlacement(adjacentTiles, letter, row, col) {
-      let word = '';
-      // Get the word for horizontal placement
-      let horizontalWord = '';
-      let leftCol = col - 1;
-      while (leftCol >= 0 && document.querySelector(`.square[data-row='${row}'][data-col='${leftCol}']`).classList.contains('occupied')) {
-        horizontalWord = document.querySelector(`.square[data-row='${row}'][data-col='${leftCol}']`).textContent + horizontalWord;
-        leftCol--;
-      }
-      horizontalWord += letter;
-      let rightCol = col + 1;
-      while (rightCol < 15 && document.querySelector(`.square[data-row='${row}'][data-col='${rightCol}']`).classList.contains('occupied')) {
-        horizontalWord += document.querySelector(`.square[data-row='${row}'][data-col='${rightCol}']`).textContent;
-        rightCol++;
-      }
-      // Get the word for vertical placement
-      let verticalWord = '';
-      let topRow = row - 1;
-      while (topRow >= 0 && document.querySelector(`.square[data-row='${topRow}'][data-col='${col}']`).classList.contains('occupied')) {
-        verticalWord = document.querySelector(`.square[data-row='${topRow}'][data-col='${col}']`).textContent + verticalWord;
-        topRow--;
-      }
-      verticalWord += letter;
-      let bottomRow = row + 1;
-      while (bottomRow < 15 && document.querySelector(`.square[data-row='${bottomRow}'][data-col='${col}']`).classList.contains('occupied')) {
-        verticalWord += document.querySelector(`.square[data-row='${bottomRow}'][data-col='${col}']`).textContent;
-        bottomRow++;
-      }
-      // Check if either word is valid
-      return dictionary.includes(horizontalWord.toUpperCase()) || dictionary.includes(verticalWord.toUpperCase());
-    }
+  let word = '';
+  // Get the word for horizontal placement
+  let horizontalWord = '';
+  let leftCol = col - 1;
+  while (leftCol >= 0 && document.querySelector(`.square[data-row='${row}'][data-col='${leftCol}']`).classList.contains('occupied')) {
+    horizontalWord = document.querySelector(`.square[data-row='${row}'][data-col='${leftCol}']`).textContent + horizontalWord;
+    leftCol--;
+  }
+  horizontalWord += letter;
+  let rightCol = col + 1;
+  while (rightCol < 15 && document.querySelector(`.square[data-row='${row}'][data-col='${rightCol}']`).classList.contains('occupied')) {
+    horizontalWord += document.querySelector(`.square[data-row='${row}'][data-col='${rightCol}']`).textContent;
+    rightCol++;
+  }
+  // Get the word for vertical placement
+  let verticalWord = '';
+  let topRow = row - 1;
+  while (topRow >= 0 && document.querySelector(`.square[data-row='${topRow}'][data-col='${col}']`).classList.contains('occupied')) {
+    verticalWord = document.querySelector(`.square[data-row='${topRow}'][data-col='${col}']`).textContent + verticalWord;
+    topRow--;
+  }
+  verticalWord += letter;
+  let bottomRow = row + 1;
+  while (bottomRow < 15 && document.querySelector(`.square[data-row='${bottomRow}'][data-col='${col}']`).classList.contains('occupied')) {
+    verticalWord += document.querySelector(`.square[data-row='${bottomRow}'][data-col='${col}']`).textContent;
+    bottomRow++;
+  }
+  // Check if either word is valid
+  return dictionary.includes(horizontalWord.toUpperCase()) || dictionary.includes(verticalWord.toUpperCase());
+}
 
     function updateRackDisplay() {
       // Update the rack tiles after placing a tile
