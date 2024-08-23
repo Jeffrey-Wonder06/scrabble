@@ -121,7 +121,7 @@
     let placedTiles = [];
     let currentPlayer = 1;
     let playerScores = {1: 0, 2: 0};
-    let dictionary = ["CAT", "DOG", "HOUSE", "TREE", "BIRD", "SUN", "MOON", "STAR"]; // Replace with your dictionary
+    let dictionary = []; // We'll fetch the dictionary later
 
     // Define the tile values and special tiles
     const tileData = {
@@ -406,13 +406,26 @@
       }
     }
 
+    // Fetch the Scrabble dictionary
+    async function fetchDictionary() {
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/dariusk/wordlist/master/words.txt');
+        const data = await response.text();
+        dictionary = data.split('\n');
+        initGame(); // Start the game after the dictionary is loaded
+      } catch (error) {
+        console.error("Error fetching dictionary:", error);
+      }
+    }
+
     function initGame() {
       createBoard();
       drawTiles();
       submitWordButton.addEventListener('click', handleSubmitWord);
     }
 
-    initGame();
+    // Start by fetching the dictionary
+    fetchDictionary();
   </script>
 </body>
 </html>
