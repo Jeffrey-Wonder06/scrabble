@@ -270,17 +270,7 @@
       });
     }
 
-    function resetBoard() {
-      placedTiles.forEach(({ row, col }) => {
-        const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
-        if (square) {
-          square.textContent = '';
-          square.classList.remove('occupied');
-        }
-      });
-      placedTiles = [];
-      updateBoardDisplay();
-    }
+
 
     function initGame() {
       createBoard();
