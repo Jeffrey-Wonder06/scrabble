@@ -207,6 +207,21 @@
         updateBoardDisplay();
       }
     }
+    function isValidPlacement(row, col) {
+      // Check horizontal and vertical neighbors
+      const neighbors = [
+        { row: row - 1, col: col },
+        { row: row + 1, col: col },
+        { row: row, col: col - 1 },
+        { row: row, col: col + 1 }
+      ];
+      return neighbors.some(neighbor => {
+        const neighborIndex = neighbor.row * boardSize + neighbor.col;
+        return neighborIndex >= 0 && neighborIndex < squares.length &&
+               squares[neighborIndex].textContent !== '';
+      });
+    }
+
 
     function handleSquareClick(event) {
       const square = event.currentTarget;
