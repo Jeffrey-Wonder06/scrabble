@@ -121,7 +121,8 @@
     let placedTiles = [];
     let currentPlayer = 1;
     let playerScores = {1: 0, 2: 0};
-    
+    let dictionary = ["CAT", "DOG", "HOUSE", "TREE", "BIRD", "SUN", "MOON", "STAR"]; // Replace with your dictionary
+
     // Define the tile values and special tiles
     const tileData = {
       'A': 1, 'B': 3, 'C': 3, 'D': 2, 'E': 1, 'F': 4, 'G': 2,
@@ -159,8 +160,6 @@
         { row: 9, col: 1, type: 'triple-letter' }, { row: 9, col: 5, type: 'triple-letter' },
         { row: 9, col: 9, type: 'triple-letter'}, { row: 9, col: 13, type: 'triple-letter' },
         { row: 13, col: 5, type: 'triple-letter' }, { row: 13, col: 9, type: 'triple-letter' },
-
-
       ]; 
 
       for (let row = 0; row < 15; row++) {
@@ -207,8 +206,13 @@
         updateBoardDisplay();
       }
     }
+
     function isValidPlacement(row, col) {
-      // Check horizontal and vertical neighbors
+      if (placedTiles.length === 0) {
+        return true; // First move is always valid
+      }
+
+      // Check if the square is adjacent to a placed tile
       const neighbors = [
         { row: row - 1, col: col },
         { row: row + 1, col: col },
@@ -216,12 +220,12 @@
         { row: row, col: col + 1 }
       ];
       return neighbors.some(neighbor => {
-        const neighborIndex = neighbor.row * boardSize + neighbor.col;
-        return neighborIndex >= 0 && neighborIndex < squares.length &&
-               squares[neighborIndex].textContent !== '';
+        const neighborIndex = neighbor.row * 15 + neighbor.col;
+        return neighborIndex >= 0 && neighborIndex < 225 &&
+               document.querySelector(`.square[data-row='${neighbor.row}'][data-col='${neighbor.col}']`)
+                  .classList.contains('occupied');
       });
     }
-
 
     function handleSquareClick(event) {
       const square = event.currentTarget;
@@ -229,10 +233,12 @@
       const col = square.dataset.col;
 
       if (selectedTile) {
-        placeTile(row, col, selectedTile.textContent);
-        selectedTile.classList.remove('selected');
-        selectedTile = null;
-        updateRackDisplay();
+        if (isValidPlacement(row, col)) {
+          placeTile(row, col, selectedTile.textContent);
+          selectedTile.classList.remove('selected');
+          selectedTile = null;
+          updateRackDisplay();
+        }
       }
     }
 
@@ -252,7 +258,7 @@
       });
 
       const wordStr = word.join('');
-      if (wordStr.length > 0) {
+      if (wordStr.length > 0 && dictionary.includes(wordStr.toUpperCase())) {
         console.log(`Word Submitted: ${wordStr}`);
         const score = calculateScore(wordStr);
         playerScores[currentPlayer] += score;
@@ -260,12 +266,17 @@
         switchPlayer();
         drawTiles();
         resetBoard();
+      } else {
+        alert("Invalid word!");
       }
     }
 
     function switchPlayer() {
       currentPlayer = currentPlayer === 1 ? 2 : 1;
       playerTurn.textContent = `Player ${currentPlayer}'s Turn`;
+      if (currentPlayer === 2) { // AI's turn
+        setTimeout(aiTurn, 1000); // Simulate thinking time
+      }
     }
 
     function calculateScore(word) {
@@ -285,7 +296,115 @@
       });
     }
 
+    function resetBoard() {
+      placedTiles = [];
+      for (let row = 0; row < 15; row++) {
+        for (let col = 0; col < 15; col++) {
+          const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+          if (square) {
+            square.textContent = '';
+            square.classList.remove('occupied');
+          }
+        }
+      }
+    }
 
+    function aiTurn() {
+      // Simple AI logic (replace with a more sophisticated algorithm)
+      const validMoves = getValidMovesForAI();
+      if (validMoves.length > 0) {
+        const randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+        placeTile(randomMove.row, randomMove.col, randomMove.letter);
+        setTimeout(switchPlayer, 1000); // Simulate thinking time
+      } else {
+        alert("AI cannot make a move. Game Over!");
+      }
+    }
+
+    function getValidMovesForAI() {
+      const validMoves = [];
+      for (let row = 0; row < 15; row++) {
+        for (let col = 0; col < 15; col++) {
+          const square = document.querySelector(`.square[data-row='${row}'][data-col='${col}']`);
+          if (square && !square.classList.contains('occupied')) {
+            const adjacentTiles = getAdjacentTiles(row, col);
+            if (adjacentTiles.length > 0) {
+              for (let i = 0; i < rack.children.length; i++) {
+                const letter = rack.children[i].textContent;
+                // Check if a valid word can be formed
+                if (isValidWordWithPlacement(adjacentTiles, letter, row, col)) {
+                  validMoves.push({ row, col, letter });
+                  break; // Move to next square if a valid move is found
+                }
+              }
+            }
+          }
+        }
+      }
+      return validMoves;
+    }
+
+    function getAdjacentTiles(row, col) {
+      const adjacentTiles = [];
+      const neighbors = [
+        { row: row - 1, col: col },
+        { row: row + 1, col: col },
+        { row: row, col: col - 1 },
+        { row: row, col: col + 1 }
+      ];
+      neighbors.forEach(neighbor => {
+        const neighborIndex = neighbor.row * 15 + neighbor.col;
+        if (neighborIndex >= 0 && neighborIndex < 225 &&
+            document.querySelector(`.square[data-row='${neighbor.row}'][data-col='${neighbor.col}']`)
+               .classList.contains('occupied')) {
+          adjacentTiles.push(neighbor);
+        }
+      });
+      return adjacentTiles;
+    }
+
+    function isValidWordWithPlacement(adjacentTiles, letter, row, col) {
+      let word = '';
+      // Get the word for horizontal placement
+      let horizontalWord = '';
+      let leftCol = col - 1;
+      while (leftCol >= 0 && document.querySelector(`.square[data-row='${row}'][data-col='${leftCol}']`).classList.contains('occupied')) {
+        horizontalWord = document.querySelector(`.square[data-row='${row}'][data-col='${leftCol}']`).textContent + horizontalWord;
+        leftCol--;
+      }
+      horizontalWord += letter;
+      let rightCol = col + 1;
+      while (rightCol < 15 && document.querySelector(`.square[data-row='${row}'][data-col='${rightCol}']`).classList.contains('occupied')) {
+        horizontalWord += document.querySelector(`.square[data-row='${row}'][data-col='${rightCol}']`).textContent;
+        rightCol++;
+      }
+      // Get the word for vertical placement
+      let verticalWord = '';
+      let topRow = row - 1;
+      while (topRow >= 0 && document.querySelector(`.square[data-row='${topRow}'][data-col='${col}']`).classList.contains('occupied')) {
+        verticalWord = document.querySelector(`.square[data-row='${topRow}'][data-col='${col}']`).textContent + verticalWord;
+        topRow--;
+      }
+      verticalWord += letter;
+      let bottomRow = row + 1;
+      while (bottomRow < 15 && document.querySelector(`.square[data-row='${bottomRow}'][data-col='${col}']`).classList.contains('occupied')) {
+        verticalWord += document.querySelector(`.square[data-row='${bottomRow}'][data-col='${col}']`).textContent;
+        bottomRow++;
+      }
+      // Check if either word is valid
+      return dictionary.includes(horizontalWord.toUpperCase()) || dictionary.includes(verticalWord.toUpperCase());
+    }
+
+    function updateRackDisplay() {
+      // Update the rack tiles after placing a tile
+      for (let i = 0; i < rack.children.length; i++) {
+        const tile = rack.children[i];
+        if (tile.textContent === selectedTile.textContent) {
+          tile.textContent = ' '; // Remove the placed tile from the rack
+          break;
+        }
+      }
+    }
 
     function initGame() {
       createBoard();
