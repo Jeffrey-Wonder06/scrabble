@@ -226,19 +226,6 @@
                   .classList.contains('occupied');
       });
     }
-    async function isValidWord(word) {
-  try {
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-    if (!response.ok) {
-      return false; // Word not found
-    }
-    const data = await response.json();
-    return data.length > 0; // Check if the response has entries (word is valid)
-  } catch (error) {
-    console.error("Error fetching dictionary data:", error);
-    return false;
-  }
-}
 
     function handleSquareClick(event) {
       const square = event.currentTarget;
